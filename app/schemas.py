@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
-
+from typing import Optional
+from datetime import datetime
 
 # ==== User Schemas ====
 
@@ -27,3 +28,23 @@ class TokenData(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int = 60
+
+# ==== Win Schemas ====
+
+class WinBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    date: Optional[datetime] = Field(default_factory=datetime.utcnow)
+
+class WinCreate(WinBase):
+    pass
+
+class WinUpdate(WinBase):
+    pass
+
+class WinOut(WinBase):
+    id: int
+    user_id: int
+
+    class Config:
+        orm_mode = True
