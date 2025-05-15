@@ -16,3 +16,14 @@ class UserOut(UserBase):
 
     class Config:
         orm_mode = True
+
+# ==== Token Schemas ====
+
+class TokenRequest(BaseModel):
+    username: str = Field(...)
+    password: str = Field(...)
+
+class TokenData(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int = 60
