@@ -20,14 +20,18 @@ class UserOut(UserBase):
 
 # ==== Token Schemas ====
 
+class RegisterRequest(BaseModel):
+    username: str = Field(...)
+    password: str = Field(...)
+    role: str = "USER"
+
 class TokenRequest(BaseModel):
     username: str = Field(...)
     password: str = Field(...)
 
-class TokenData(BaseModel):
+class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    expires_in: int = 60
 
 # ==== Win Schemas ====
 
