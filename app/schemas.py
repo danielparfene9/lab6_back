@@ -16,7 +16,7 @@ class UserOut(UserBase):
     role: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # ==== Token Schemas ====
 
@@ -46,4 +46,4 @@ class WinOut(WinBase):
     user_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True

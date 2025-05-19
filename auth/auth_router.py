@@ -5,7 +5,7 @@ from db.models import User
 from db.alchemy_settings import DBSessionSingleton, init_db
 from .auth import create_access_token
 from app.schemas import UserCreate, TokenRequest, TokenResponse
-
+from fastapi.security import OAuth2PasswordRequestForm
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -38,9 +38,9 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
     return {"msg": f"User '{user.username}' registered successfully."}
 
 @router.post("/token", response_model=TokenResponse)
-def login(data: TokenRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter_by(username=data.username).first()
-    if not user or not verify_password(data.password, user.password_hash):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(username=form_data.username).first()
+    if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
     token = create_access_token({"sub": user.username, "role": user.role})
