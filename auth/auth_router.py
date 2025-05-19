@@ -6,6 +6,8 @@ from db.alchemy_settings import DBSessionSingleton, init_db
 from .auth import create_access_token
 from app.schemas import UserCreate, TokenRequest, TokenResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from datetime import datetime
+
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -42,6 +44,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     user = db.query(User).filter_by(username=form_data.username).first()
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid username or password")
+    elif user.login_blocked_until and user.login_blocked_until > datetime.utcnow():
+        raise HTTPException(status_code=403, detail="Login temporarily restricted")
 
-    token = create_access_token({"sub": user.username, "role": user.role})
+    token = create_access_token({"sub": user.username, "id": user.id, "role": user.role})
     return {"access_token": token, "token_type": "bearer"}

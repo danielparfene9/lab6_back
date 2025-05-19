@@ -14,7 +14,8 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(String, default="USER")
-
+    login_blocked_until = Column(DateTime, nullable=True)
+    
     wins = relationship("Win", back_populates="owner")
 
 
