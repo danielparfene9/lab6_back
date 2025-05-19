@@ -4,7 +4,7 @@ from passlib.context import CryptContext
 from db.models import User
 from db.alchemy_settings import DBSessionSingleton, init_db
 from .auth import create_access_token
-from app.schemas import RegisterRequest, TokenRequest, TokenResponse
+from app.schemas import UserCreate, TokenRequest, TokenResponse
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -23,7 +23,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 # === ROUTES ===
 
 @router.post("/register", status_code=201)
-def register(data: RegisterRequest, db: Session = Depends(get_db)):
+def register(data: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter_by(username=data.username).first():
         raise HTTPException(status_code=400, detail="Username already taken")
 

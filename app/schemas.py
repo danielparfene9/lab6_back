@@ -20,11 +20,6 @@ class UserOut(UserBase):
 
 # ==== Token Schemas ====
 
-class RegisterRequest(BaseModel):
-    username: str = Field(...)
-    password: str = Field(...)
-    role: str = "USER"
-
 class TokenRequest(BaseModel):
     username: str = Field(...)
     password: str = Field(...)
