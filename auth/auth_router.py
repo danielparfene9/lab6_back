@@ -1,27 +1,47 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
-from db.alchemy_settings import get_db
+from passlib.context import CryptContext
 from db.models import User
-from app.schemas import TokenData, TokenRequest
-from auth.auth import create_access_token
-from utils.security import verify_password
-from datetime import timedelta
+from db.alchemy_settings import DBSessionSingleton, init_db
+from .auth import create_access_token
+from app.schemas import RegisterRequest, TokenRequest, TokenResponse
 
-router = APIRouter(prefix="/token", tags=["Auth"])
+router = APIRouter()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-@router.post("", response_model=TokenData)
-def login(data: TokenRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == data.username).first()
-    
-    if not user or not verify_password(data.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password"
-        )
+# === HELPERS ===
 
-    token = create_access_token(
-        data={"sub": str(user.id), "role": user.role},
-        expires_delta=timedelta(minutes=1)
+def get_db():
+    return DBSessionSingleton.get_session()
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
+
+# === ROUTES ===
+
+@router.post("/register", status_code=201)
+def register(data: RegisterRequest, db: Session = Depends(get_db)):
+    if db.query(User).filter_by(username=data.username).first():
+        raise HTTPException(status_code=400, detail="Username already taken")
+
+    user = User(
+        username=data.username,
+        password_hash=hash_password(data.password),
+        role=data.role
     )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {"msg": f"User '{user.username}' registered successfully."}
 
-    return TokenData(access_token=token, expires_in=60)
+@router.post("/token", response_model=TokenResponse)
+def login(data: TokenRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(username=data.username).first()
+    if not user or not verify_password(data.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    token = create_access_token({"sub": user.username, "role": user.role})
+    return {"access_token": token, "token_type": "bearer"}
